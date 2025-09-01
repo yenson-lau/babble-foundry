@@ -1,5 +1,7 @@
 # Babble Foundry
 
+![babble foundry cover image](./assets/cover.webp)
+
 ## Todos
 
 - [ ] [Tool & function calling tutorial](https://openrouter.ai/docs/features/tool-calling)
