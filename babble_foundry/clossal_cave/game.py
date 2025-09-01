@@ -57,21 +57,9 @@ class ClossalCaveGame:
         load_advent_dat(self._game)
         self._game.start()
 
-        # Save the initial output (including instructions question)
-        self._pending_output = self._game.output
-        self._game.output = ''
+        self.input('no')    # decline instructions
 
-    def read(self):
-        """Read the current game output/description.
-
-        Returns:
-            str: The current game output to display to player
-        """
-        output = self._pending_output.rstrip('\n')
-        self._pending_output = ''
-        return output
-
-    def write(self, command_text):
+    def input(self, command_text):
         """Send a command to the game.
 
         Args:
@@ -87,32 +75,9 @@ class ClossalCaveGame:
         else:
             self._pending_output = ''
 
-    def save(self, filename: str):
-        """Save the game state to a file.
-
-        Args:
-            filename: Path to save file
-        """
-        self._game.t_suspend('save', filename)
-
-    @classmethod
-    def load(cls, filename: str):
-        """Load a saved game.
-
-        Args:
-            filename: Path to save file
-
-        Returns:
-            ClossalCaveGame: Loaded game instance
-        """
-        loaded_game = Game.resume(filename)
-
-        # Create wrapper instance
-        game = cls.__new__(cls)     # Create without calling __init__
-        game._game = loaded_game
-        game._pending_output = ''
-
-        return game
+    @property
+    def output(self) -> str:
+        return self._game.output.rstrip('\n')
 
     @property
     def instructions(self) -> str:
@@ -180,12 +145,38 @@ class ClossalCaveGame:
             "deaths": self.deaths
         }
 
+    def save(self, filename: str):
+        """Save the game state to a file.
+
+        Args:
+            filename: Path to save file
+        """
+        self._game.t_suspend('save', filename)
+
+    @classmethod
+    def load(cls, filename: str):
+        """Load a saved game.
+
+        Args:
+            filename: Path to save file
+
+        Returns:
+            ClossalCaveGame: Loaded game instance
+        """
+        loaded_game = Game.resume(filename)
+
+        # Create wrapper instance
+        game = cls.__new__(cls)     # Create without calling __init__
+        game._game = loaded_game
+        game._pending_output = ''
+
+        return game
+
 
 if __name__ == '__main__':
     # Example usage:
     game = ClossalCaveGame()
-    current_desc = game.read()  # game's starting description
-    print("Starting description:", current_desc)
+    print("Starting description:", game.output)
 
     # Example game loop
     commands = ['east', 'get lamp', 'west', 'south', 'inventory']
@@ -195,9 +186,8 @@ if __name__ == '__main__':
             break
 
         print(f"\n> {cmd}")
-        game.write(cmd)
-        response = game.read()
-        print(response)
+        game.input(cmd)
+        print(game.output)
 
     print(f"\nGame Status:")
     print(json.dumps(game.get_status(), indent=2))
