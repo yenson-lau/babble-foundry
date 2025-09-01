@@ -1,7 +1,41 @@
+import aiohttp
 import json
 import os
+import warnings
 import requests
-from typing import Generator, Literal, Optional, overload
+from typing import Any, Generator, Literal, Optional, overload
+
+
+SUPPORTED_REQUEST_PARAMS: tuple[str, ...] = (
+    "messages",
+    "prompt",
+    "model",
+    "response_format",
+    "stop",
+    "stream",
+    "max_tokens",
+    "temperature",
+    "tools",
+    "tool_choice",
+    "seed",
+    "top_p",
+    "top_k",
+    "frequency_penalty",
+    "presence_penalty",
+    "repetition_penalty",
+    "logit_bias",
+    "top_logprobs",
+    "min_p",
+    "top_a",
+    "reasoning",
+    "prediction",
+    "transforms",
+    "models",
+    "route",
+    "provider",
+    "user",
+    "usage",
+)
 
 
 class OpenRouter:
@@ -12,53 +46,52 @@ class OpenRouter:
         self.api_key = api_key or os.environ["OPENROUTER_API_KEY"]
 
     @overload
-    def chat(self, stream: Literal[False] = False, **data) -> dict:
+    def chat(self, stream: Literal[False] = False, **kwargs) -> dict:
         ...
 
     @overload
-    def chat(self, stream: Literal[True], **data) -> Generator[dict, None, None]:
+    def chat(self, stream: Literal[True], **kwargs) -> Generator[dict, None, None]:
         ...
 
-    def chat(self, stream: bool = False, **data):
+    def chat(
+        self,
+        stream: bool = False,
+        verbose: bool = False,
+        warn_chat_params: bool = True,
+        **data
+    ):
         data = data | {"stream": stream}
+        if warn_chat_params:
+            _check_data_params(data)
         args = dict(
             url="https://openrouter.ai/api/v1/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=data,
             stream=stream
         )
-        return _post_stream(**args) if stream else _post_nostream(**args)
+        return (_post_stream if stream else _post_nostream)(args, verbose=verbose)
+
+    async def achat(self, warn_chat_params: bool = True, **data):
+        data = data | {"stream": False}
+        if warn_chat_params:
+            _check_data_params(data)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json=data,
+            ) as r:
+                if r.status != 200:
+                    text = await r.text()
+                    raise RuntimeError(f"Unexpected response ({r.status}): {text}")
+                response = await r.json()
+
+        return response
 
     @staticmethod
     def print_response(response: dict):
-        return print_response(response)
-
-    @staticmethod
-    def print_streaming_response(stream: Generator[dict, None, None]) -> list[dict]:
-        return print_streaming_response(stream)
-
-
-def _post_nostream(**args) -> dict:
-    r = requests.post(**args)
-    if r.status_code != 200:
-        raise RuntimeError(
-            f"Unexpected response ({r.status_code}): {r.text}"
-        )
-    return r.json()
-
-
-def _post_stream(**args) -> Generator[dict, None, None]:
-    with requests.post(**args) as r:
-        for line in r.iter_lines(decode_unicode=True):
-            if not line.startswith('data: '):
-                continue
-            data = line[6:]
-            if data == '[DONE]':
-                break
-            try:
-                yield json.loads(data)
-            except (json.JSONDecodeError, KeyError):
-                continue
+        print_response(response)
 
 
 def print_response(response: dict):
@@ -66,25 +99,61 @@ def print_response(response: dict):
         print("===== REASONING =====")
         print(reasoning.strip())
         print("===== END OF REASONING =====\n")
-
     print(response["choices"][0]["message"]["content"])
 
 
-def print_streaming_response(stream: Generator[dict, None, None]) -> list[dict]:
-    chunks = []
-    in_reasoning = False
-    for chunk in stream:
-        chunks.append(chunk)
-        if (reasoning := chunk["choices"][0]["delta"].get("reasoning")):
-            if not in_reasoning:
-                in_reasoning = True
-                print("===== REASONING =====")
-            print(reasoning, end="")
+def _check_data_params(data: dict):
+    if (warn_params := [k for k in data if k not in SUPPORTED_REQUEST_PARAMS]):
+        warnings.warn(f"Unknown chat parameters: {', '.join(warn_params)}")
 
-        else:
-            if in_reasoning:
-                in_reasoning = False
-                print("\n===== END OF REASONING =====\n")
 
-            print(chunk["choices"][0]["delta"]["content"], end="")
-    return chunks
+def _post_nostream(args: dict[str, Any], verbose: bool) -> dict:
+    r = requests.post(**args)
+    if r.status_code != 200:
+        raise RuntimeError(f"Unexpected response ({r.status_code}): {r.text}")
+    response = r.json()
+
+    if verbose:
+        print_response(response)
+    return response
+
+
+def _post_stream(args: dict[str, Any], verbose: bool) -> Generator[dict, None, None]:
+    verbose_in_reasoning = False
+    verbose_content = None
+
+    with requests.post(**args) as r:
+        if r.status_code != 200:
+            raise RuntimeError(f"Unexpected response ({r.status_code}): {r.text}")
+
+        for line in r.iter_lines(decode_unicode=True):
+            if not line.startswith('data: '):
+                continue
+            data = line[6:]
+            if data == '[DONE]':
+                if (
+                    isinstance(verbose_content, str)
+                    and not verbose_content.endswith("\n")
+                ):
+                    print()
+                break
+            try:
+                chunk = json.loads(data)
+            except (json.JSONDecodeError, KeyError):
+                continue
+
+            if verbose:
+                delta = chunk["choices"][0]["delta"]
+                if (reasoning := delta.get("reasoning")):
+                    if not verbose_in_reasoning:
+                        verbose_in_reasoning = True
+                        print("===== REASONING =====")
+                    verbose_content = reasoning
+                else:
+                    if verbose_in_reasoning:
+                        verbose_in_reasoning = False
+                        print("\n===== END OF REASONING =====\n")
+                    verbose_content = delta["content"]
+                print(verbose_content, end="")
+            yield chunk
+
