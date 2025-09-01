@@ -7,6 +7,8 @@ from typing import Any, Generator, Literal, Optional, overload
 
 
 SUPPORTED_REQUEST_PARAMS: tuple[str, ...] = (
+    # Documented within the OpenRouter API schema:
+    #   https://openrouter.ai/docs/api-reference/overview
     "messages",
     "prompt",
     "model",
@@ -27,13 +29,15 @@ SUPPORTED_REQUEST_PARAMS: tuple[str, ...] = (
     "top_logprobs",
     "min_p",
     "top_a",
-    "reasoning",
     "prediction",
     "transforms",
     "models",
     "route",
     "provider",
     "user",
+
+    # Supported but undocumented
+    "reasoning",
     "usage",
 )
 

@@ -2,6 +2,15 @@ version = 1
 requires-python = ">=3.12"
 
 [[package]]
+name = "adventure"
+version = "1.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/f1/eb3fd22abadcafbcdd9d6b91d91c76cce4b7f34c55e1cf44dff5374829fc/adventure-1.7.tar.gz", hash = "sha256:fba584064d3b8b1ef6b62f6df6099092522d6bd3bce0525db002c54dc29ac6a1", size = 89862 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/fa/0d98dd176550ea554e271357ab308cadfbc986d14c0b3d3a14a50b62799b/adventure-1.7-py3-none-any.whl", hash = "sha256:31c65497c292093bdbb595ae8d479cc31cb43a0cfd70240359a98d830f74736c", size = 99714 },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -129,6 +138,7 @@ name = "babble-foundry"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "adventure" },
     { name = "aiohttp" },
     { name = "openai" },
     { name = "pydantic" },
@@ -146,6 +156,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "adventure", specifier = ">=1.7" },
     { name = "aiohttp", specifier = ">=3.12.15" },
     { name = "openai", specifier = ">=1.102.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
