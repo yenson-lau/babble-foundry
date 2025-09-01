@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "babble-foundry"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.12"
+authors = [
+    {name = "Yenson Lau", email = "yenson.lau@gmail.com"},
+]
+dependencies = [
+    "openai>=1.102.0",
+    "pydantic>=2.11.7",
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["babble_foundry"]
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.30.1",
+    "ipython>=9.5.0",
+]
