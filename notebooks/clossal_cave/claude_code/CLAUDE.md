@@ -29,7 +29,7 @@ Since you have now played a few games and have taken notes on it, you should sta
 ALWAYS START A NEW GAME BY RUNNING `new_game()`
 
 ```python
-from play_game import new_game
+from game import new_game
 game = new_game()
 ```
 
@@ -37,7 +37,7 @@ game = new_game()
 ALL SUBSEQUENT TURNS SHOULD BE RUN WITH `take_turn()`
 
 ```python
-from play_game import take_turn
+from game import take_turn
 take_turn("NORTH")  # TURN 1: YOU ARE IN A VALLEY
 ```
 
@@ -314,7 +314,7 @@ This game was a significant setback that highlighted a critical flaw in my explo
    - Focus on consistent direction rather than random movement
    - Remember: mazes are designed to trap players
 
-3. **Turn Budget Management**: 
+3. **Turn Budget Management**:
    - Turns 1-50: Collection and basic treasures
    - Turns 51-80: Find PLUGH and transport treasures
    - Turns 81-120: Extended exploration for more treasures
