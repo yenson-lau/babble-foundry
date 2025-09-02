@@ -32,8 +32,8 @@ from adventure import load_advent_dat
 INSTRUCTIONS = """
 SOMEWHERE NEARBY IS COLOSSAL CAVE, WHERE OTHERS HAVE FOUND FORTUNES IN
 TREASURE AND GOLD, THOUGH IT IS RUMORED THAT SOME WHO ENTER ARE NEVER
-SEEN AGAIN.  MAGIC IS SAID TO WORK IN THE CAVE.  I WILL BE YOUR EYES
-AND HANDS.  DIRECT ME WITH COMMANDS OF 1 OR 2 WORDS.  I SHOULD WARN
+SEEN AGAIN. MAGIC IS SAID TO WORK IN THE CAVE. I WILL BE YOUR EYES
+AND HANDS. DIRECT ME WITH COMMANDS OF 1 OR 2 WORDS. I SHOULD WARN
 YOU THAT I LOOK AT ONLY THE FIRST FIVE LETTERS OF EACH WORD, SO YOU'LL
 HAVE TO ENTER "NORTHEAST" AS "NE" TO DISTINGUISH IT FROM "NORTH".
 (SHOULD YOU GET STUCK, TYPE "HELP" FOR SOME GENERAL HINTS.  FOR INFOR-
@@ -53,7 +53,14 @@ class ClossalCaveGame:
         filename: Optional[str] = None,
         seed=None,
         allow_quitting: bool = False,
-        override_score_command: bool = True,
+        block_commands: tuple[str, ...] = (
+            "quit",
+            "suspend",
+            "pause",
+            "save",
+            "brief",
+            "score",
+        ),
     ):
         """Initialize a new game.
 
@@ -61,7 +68,7 @@ class ClossalCaveGame:
             seed: Optional random seed for reproducible games
         """
         self.allow_quitting = allow_quitting
-        self.override_score_command = override_score_command
+        self.block_commands = block_commands
         self._output_override: Optional[str] = None
 
         if filename:
@@ -92,12 +99,11 @@ class ClossalCaveGame:
     def _override_output(self, cmd: str) -> Optional[str]:
         if not cmd:
             return "NO COMMAND GIVEN."
-
-        if ("quit" in cmd) and not self.allow_quitting:
-            return "QUITTING IS NOT ALLOWED!"
-
-        if "score" in cmd and self.override_score_command:
+        elif ("score" in cmd) and ("score" in self.block_commands):
             return f"SCORE: {self.score['current']}/{self.score['max']}"
+        elif any(blocked in cmd for blocked in self.block_commands):
+            return "THIS COMMAND IS NOT ALLOWED."
+        return None
 
     @property
     def output(self) -> str:

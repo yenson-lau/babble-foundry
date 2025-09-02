@@ -3,13 +3,16 @@
 ## Task
 Your goal is to try to score as many points as possible in the Clossal Cave Adventure within **200** turns.
 
-Here are the official game instructions:
+Since you have now played a few games and have taken notes on it, you should start trying to optimize your moves and avoid wasting turns.
+
+### Some information from the manual:
+Official game instructions:
 
 ```text
 SOMEWHERE NEARBY IS COLOSSAL CAVE, WHERE OTHERS HAVE FOUND FORTUNES IN
 TREASURE AND GOLD, THOUGH IT IS RUMORED THAT SOME WHO ENTER ARE NEVER
-SEEN AGAIN.  MAGIC IS SAID TO WORK IN THE CAVE.  I WILL BE YOUR EYES
-AND HANDS.  DIRECT ME WITH COMMANDS OF 1 OR 2 WORDS.  I SHOULD WARN
+SEEN AGAIN. MAGIC IS SAID TO WORK IN THE CAVE. I WILL BE YOUR EYES
+AND HANDS. DIRECT ME WITH COMMANDS OF 1 OR 2 WORDS. I SHOULD WARN
 YOU THAT I LOOK AT ONLY THE FIRST FIVE LETTERS OF EACH WORD, SO YOU'LL
 HAVE TO ENTER "NORTHEAST" AS "NE" TO DISTINGUISH IT FROM "NORTH".
 (SHOULD YOU GET STUCK, TYPE "HELP" FOR SOME GENERAL HINTS.  FOR INFOR-
@@ -20,7 +23,35 @@ FEATURES OF THE CURRENT PROGRAM WERE ADDED BY DON WOODS (DON @ SU-AI).
 CONTACT DON IF YOU HAVE ANY QUESTIONS, COMMENTS, ETC.
 ```
 
-Since you have now played a few games and have taken notes on it, you should start trying to optimize your moves and avoid wasting turns.
+#### Commands
+Because the computer recognizes only the first four letters of each word, you will have to modify longer words. For example, type NE for Northeast.
+
+A few examples of command words are:
+- FOREST
+- BUILDING
+- DNSTREAM
+- ENTER
+- EAST
+- SOUTH
+- UP
+- DOWN
+- GET (object)
+
+If you misspell a command or use a command the program doesn't recognize it will respond with a statement like I don't know that word. or I don't recognize that word here. Try a different word for the same idea or try a different tack.
+
+#### Special Function Commands
+There are some commands that provide special information. You can use them at any time during the game. They are:
+- HELP: Gives you general hints about the nature of the game. Asking for help costs you points.
+- INFO: Explains how to use special commands.
+- QUIT / SUSPEND / PAUSE / SAVE / BRIEF: These commands are blocked and will waste a turn.
+- LOOK: This command will give you a reminder of your current location. It will waste a and you should rely on your context and `history.txt` instead.
+- SCORE Lists your current score. This command will waste a turn since the score is already displayed in the output.
+- INVENTORY Gives you an inventory of all the objects you are carrying.
+
+### Hints
+If you are having difficulty in a certain part of the game, the computer may offer you a hint. It will ask: "I'm prepared to offer you a hint, but it will cost you points. Do you want the hint?"
+
+If you respond by typing YES and pressing ENTER, you will get assistance with the problem but you will also lose points. By typing NO and pressing ENTER, you will be left to your own devices.
 
 
 ## Gameplay loop
