@@ -21,8 +21,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import json
+import os
 import re
-from typing import Any
+from typing import Any, Optional
 from adventure.game import Game
 from adventure.model import Room
 from adventure import load_advent_dat
@@ -47,36 +48,61 @@ CONTACT DON IF YOU HAVE ANY QUESTIONS, COMMENTS, ETC.
 class ClossalCaveGame:
     """Non-interactive wrapper for the Clossal Cave Adventure game."""
 
-    def __init__(self, seed=None):
+    def __init__(
+        self,
+        filename: Optional[str] = None,
+        seed=None,
+        allow_quitting: bool = False,
+        override_score_command: bool = True,
+    ):
         """Initialize a new game.
 
         Args:
             seed: Optional random seed for reproducible games
         """
+        self.allow_quitting = allow_quitting
+        self.override_score_command = override_score_command
+        self._output_override: Optional[str] = None
+
+        if filename:
+            self._game = Game.resume(filename)
+            return
+
         self._game = Game(seed)
         load_advent_dat(self._game)
         self._game.start()
-
         self.input('no')    # decline instructions
 
-    def input(self, command_text):
+    def input(self, cmd: str) -> None:
         """Send a command to the game.
 
         Args:
-            command_text: The command text (e.g., "get lamp", "north", "inventory")
+            cmd: The command text (e.g., "get lamp", "north", "inventory")
         """
-        if not command_text.strip():
-            return
+        cmd = cmd.strip().lower()
+        self._output_override = self._override_output(cmd)
+
+        if isinstance(self._output_override, str):
+            cmd = "lksjlfkds"
 
         # Parse command into words like the traditional mode does
-        words = re.findall(r'\w+', command_text.lower())
-        if words:
-            self._pending_output = self._game.do_command(words)
-        else:
-            self._pending_output = ''
+        words = re.findall(r'\w+', cmd)
+        self._game.do_command(words)
+
+    def _override_output(self, cmd: str) -> Optional[str]:
+        if not cmd:
+            return "NO COMMAND GIVEN."
+
+        if ("quit" in cmd) and not self.allow_quitting:
+            return "QUITTING IS NOT ALLOWED!"
+
+        if "score" in cmd and self.override_score_command:
+            return f"SCORE: {self.score['current']}/{self.score['max']}"
 
     @property
     def output(self) -> str:
+        if isinstance(self._output_override, str):
+            return self._output_override
         return self._game.output.rstrip('\n')
 
     @property
@@ -145,32 +171,17 @@ class ClossalCaveGame:
             "deaths": self.deaths
         }
 
-    def save(self, filename: str):
+    def save(self, filename: str, overwrite: bool = True):
         """Save the game state to a file.
 
         Args:
             filename: Path to save file
         """
+        if os.path.exists(filename):
+            if not overwrite:
+                raise FileExistsError(f"File {filename} already exists")
+            os.remove(filename)
         self._game.t_suspend('save', filename)
-
-    @classmethod
-    def load(cls, filename: str):
-        """Load a saved game.
-
-        Args:
-            filename: Path to save file
-
-        Returns:
-            ClossalCaveGame: Loaded game instance
-        """
-        loaded_game = Game.resume(filename)
-
-        # Create wrapper instance
-        game = cls.__new__(cls)     # Create without calling __init__
-        game._game = loaded_game
-        game._pending_output = ''
-
-        return game
 
 
 if __name__ == '__main__':
